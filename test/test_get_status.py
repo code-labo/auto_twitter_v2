@@ -19,7 +19,7 @@ def main():
     auto_twitter=AutoTwitter()
     auto_twitter.access_url(base_url)
 
-    print(auto_twitter.get_status(base_url+f"/labo_code"))
+    print(auto_twitter.get_status(base_url+f"/{ACCOUNT_NAME}"))
 
 if __name__=="__main__":
     main()

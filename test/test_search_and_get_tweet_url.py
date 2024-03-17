@@ -22,7 +22,7 @@ def main():
 
     tweet_list=[]
 
-    key_words=["遊戯王","ラズパイ","b3d"]
+    key_words=["#遊戯王","#ラズパイ","#b3d"]
     tab_name="最新"
     for keyword in key_words:
 

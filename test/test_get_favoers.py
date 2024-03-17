@@ -19,17 +19,17 @@ def main():
     auto_twitter=AutoTwitter()
     
     favoer_list=auto_twitter.get_favoers(
-        tweet_url="https://twitter.com/3meko1/status/1558442352657977346/"
+        tweet_url="https://twitter.com/hallooo2222/status/1769223888838488538"
     )
 
     print(favoer_list)
     print(len(favoer_list))
 
-    html=auto_twitter.driver.page_source
-    with open("research.html","w",encoding="utf-8") as f:
-        soup=BeautifulSoup(html,"html.parser")
-        f.write(soup.prettify())
-        print("save done")
+    # html=auto_twitter.driver.page_source
+    # with open("research.html","w",encoding="utf-8") as f:
+    #     soup=BeautifulSoup(html,"html.parser")
+    #     f.write(soup.prettify())
+    #     print("save done")
 
 if __name__=="__main__":
     main()

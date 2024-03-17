@@ -15,9 +15,8 @@ from .driver import init_driver
 class AutoTwitter():
 
 
-    def __init__(self,driver_name="msedgedriver.exe"):
+    def __init__(self):
         self.driver=init_driver(
-            driver_dir=DRIVER_BASE_DIR+driver_name,
             profile_name=PROFILE_NAME,
             profile_path=PROFILE_PATH
         )
@@ -51,9 +50,10 @@ class AutoTwitter():
 
         self.access_url(account_url)
 
+        class_value="css-175oi2r.r-13awgt0.r-18u37iz.r-1w6e6rj" #フォロー中 フォロワーのクラス名. ちょくちょく変わるっぽい
         profile_element=self.driver.find_element(
             by=By.CLASS_NAME,
-            value="css-1dbjc4n.r-1ifxtd0.r-ymttw5.r-ttdzmv"
+            value=class_value
             ) #プロフィール要素
         
         ancher_elements=profile_element.find_elements(by=By.TAG_NAME,value="a")
@@ -246,8 +246,10 @@ class AutoTwitter():
                 ancher.click() #フォロワー一覧の表示
                 break
 
-        time.sleep(5)
+        time.sleep(1)
+        self.access_url(account_url+"/followers")
 
+        class_value="css-175oi2r.r-1wbh5a2.r-dnmrzs.r-1ny4l3l.r-1loqt21" #フォロワー一覧のそれぞれのアカウントのリンクのクラス名
         followers_links=[]
         current_height=0
         t=time.time()
@@ -262,7 +264,7 @@ class AutoTwitter():
                     section_follower=self.driver.find_elements(by=By.TAG_NAME,value="section")[0] #最初のセクションが多分フォロワー
                     elements_follower=section_follower.find_elements(
                         by=By.CLASS_NAME,
-                        value="css-4rbku5.css-18t94o4.css-1dbjc4n.r-1niwhzg.r-1loqt21.r-1pi2tsx.r-1ny4l3l.r-o7ynqc.r-6416eg.r-13qz1uu"
+                        value=class_value
                         )
                     
                     for follower in elements_follower:
@@ -306,7 +308,7 @@ class AutoTwitter():
         time.sleep(5)
         ##
 
-        self.driver.set_window_size(400,self.driver.get_window_size()["height"]) #幅を狭めることでpopupページじゃなくする.
+        # self.driver.set_window_size(400,self.driver.get_window_size()["height"]) #幅を狭めることでpopupページじゃなくする.
 
 
     def get_favoers(self,tweet_url):
@@ -317,13 +319,14 @@ class AutoTwitter():
         """
 
         #いいねした人の一覧画面を開く
-        self._open_favoer_page(tweet_url)
+        self._open_favoer_page(tweet_url+"/likes")        
 
 
         #スクロールしながら
         favoer_list=[]
         current_height=0
         scroll_count=0
+        class_value="css-175oi2r r-1wbh5a2 r-dnmrzs r-1ny4l3l r-1loqt21" #いいね一覧のそれぞれのアカウントのリンクのクラス
         while True:
 
             #今の画面のいいねした人を取得
@@ -332,7 +335,7 @@ class AutoTwitter():
             anchers=self.driver.find_elements(by=By.TAG_NAME,value="a")
             for ancher in anchers:
                 try:
-                    if ancher.get_attribute("class")=="css-4rbku5 css-18t94o4 css-1dbjc4n r-1niwhzg r-1loqt21 r-1pi2tsx r-1ny4l3l r-o7ynqc r-6416eg r-13qz1uu":
+                    if ancher.get_attribute("class")==class_value:
                         href=ancher.get_attribute("href")
                         if self.account_name in href:
                             break
@@ -371,15 +374,18 @@ class AutoTwitter():
         time.sleep(1)
 
         #クリックできる要素を取得
+
+        #リツイート、いいねなどのボタンのクラス名
+        class_value="css-175oi2r.r-1777fci.r-bt1l66.r-bztko3.r-lrvibr.r-1loqt21.r-1ny4l3l"
         clickable_elements=self.driver.find_elements(
             by=By.CLASS_NAME,
-            value="css-18t94o4.css-1dbjc4n.r-1777fci.r-bt1l66.r-1ny4l3l.r-bztko3.r-lrvibr"
+            value=class_value
         )
 
         #クリックできる要素の中で, いいねボタンをクリックする
         for element in clickable_elements:
             element_label=element.get_attribute("aria-label")
-            if (element_label=="いいね"):
+            if "いいね" in element_label:
                 if not "しました" in element_label:
                     element.click() #まだいいねしてなければいいねする
                     title_name=re.sub("/.*","",self.driver.title)
@@ -399,9 +405,10 @@ class AutoTwitter():
         #フォローボタンを取得
         #ちょっとクラス名が不安定かもしんない
         #階層構造で選択した方が良いかも...
+        class_value="css-175oi2r.r-sdzlij.r-1phboty.r-rs99b7.r-lrvibr.r-2yi16.r-1qi8awa.r-ymttw5.r-1loqt21.r-o7ynqc.r-6416eg.r-1ny4l3l"
         follow_button=self.driver.find_elements(
             by=By.CLASS_NAME,
-            value="css-18t94o4.css-1dbjc4n.r-sdzlij.r-1phboty.r-rs99b7.r-2yi16.r-1qi8awa.r-1ny4l3l.r-ymttw5.r-o7ynqc.r-6416eg.r-lrvibr"
+            value=class_value
         )
 
         #フォロー
