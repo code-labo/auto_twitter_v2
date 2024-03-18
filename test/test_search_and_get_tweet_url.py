@@ -10,7 +10,6 @@ sys.path.append(ROOT)
 
 import numpy as np
 import pandas as pd
-from copy import deepcopy
 
 from src.auto_twitter import AutoTwitter
 from src.filters import bot_filter
@@ -29,10 +28,10 @@ def main():
 
         current_height=0
 
-        auto_twitter.search_tweet(keyword=keyword)
+        auto_twitter.search_tweet(keyword="lang:ja "+keyword)
         auto_twitter.select_tab(tab_name=tab_name)
 
-        for _ in range(2):
+        for _ in range(3):
             tweet=auto_twitter.get_tweet(filters=[bot_filter])
             attrs=[[keyword,tab_name] for _ in range(len(tweet))]
 
