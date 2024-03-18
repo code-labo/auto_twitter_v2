@@ -151,10 +151,11 @@ class AutoTwitter():
                 #--
 
                 #--すでにいいねされているかをチェック
+                button_bar_class_value="css-175oi2r.r-1kbdv8c.r-18u37iz.r-1wtj0ep.r-1ye8kvj.r-1s2bzr4"
                 is_favo=False #すでにいいねされているかフラグ
                 buttons=article.find_elements(
                     By.CLASS_NAME,
-                    value="css-18t94o4.css-1dbjc4n.r-1777fci.r-bt1l66.r-1ny4l3l.r-bztko3.r-lrvibr"
+                    value=button_bar_class_value
                     )
                 # print(buttons)
                 for button in buttons:
