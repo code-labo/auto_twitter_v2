@@ -9,98 +9,63 @@ ROOT=str(Path(__file__).parent.parent)
 sys.path.append(ROOT)
 
 import numpy as np
-import psycopg2
-import argparse
-import datetime
 import random
 import pandas as pd
+from tqdm import tqdm
 
 from src.auto_twitter import AutoTwitter
 from src.envs import *
+from src.utils import Color
 
 
 def main():
-    parser=argparse.ArgumentParser()
-    parser.add_argument("--tweet_type",default="searched")
-    args=parser.parse_args()
-
     num_favo_max=FAVO_TWEET_CFG["NUM_FAVO_MAX"]
 
-    tweet_db=pd.read_csv(f"{PARENT}/database/twwets.csv",encoding="utf-8")
-    print(tweet_db)
-    exit(1)
+    tweet_db=pd.read_csv(f"{PARENT}/database/tweets.csv",encoding="utf-8")
 
-    # now=datetime.datetime.now()
 
-    ##データベースへの接続
-    # conn=psycopg2.connect(
-    #     host=HOST,user=USER,password=PASSWORD,database=DATABASE
-    # )
-
-    # #ツイートを取得
-    # with conn:
-    #     with conn.cursor() as cursor:
-
-    #         if args.tweet_type=="searched": #検索したツイート
-    #             query="SELECT id,url FROM tweet WHERE account_id IS NULL;"
-    #             cursor.execute(query)
-    #             tweets=np.array(cursor.fetchall())
-
-    #         elif args.tweet_type=="follower": #フォロワーのツイート
-    #             query="""SELECT id,account_id,url FROM tweet
-    #                      WHERE NOT account_id IS NULL;
-    #                   """
-    #             cursor.execute(query)
-    #             result=np.array(cursor.fetchall())
-    #             if len(result)>0:
-    #                 tweets=np.concatenate(
-    #                     [result[:,0].reshape(-1,1),result[:,2].reshape(-1,1)],
-    #                     axis=1
-    #                 )
-    #                 account_ids=result[:,1]
-    #             else:
-    #                 tweets=result
-    #     conn.commit()
-    # #
-
-    if len(tweets)==0: #tweetが無ければ終わり
+    if tweet_db.shape[0]==0: #tweetが無ければ終わり
         print("***No tweet...***")
         exit(1)
 
+
+    #>> favoするツイートを選ぶ >>
+    choice_size=num_favo_max if tweet_db.shape[0]>num_favo_max else tweet_db.shape[0] #favoする数を決める
+
+    target_tweets=tweet_db[tweet_db["priority"]>1.0] #まず優先度の高いツイートを取ってくる
+    if target_tweets.shape[0]<choice_size: #優先度の高いツイートの数が少ないときは, 低い方からランダムに取ってくる
+        low_priority_tweets=tweet_db[tweet_db["priority"]<=1.0] #優先度の低いツイートを取得
+        idx_choiced=random.sample(
+            np.arange(low_priority_tweets.shape[0]).tolist(),choice_size-target_tweets.shape[0] #ランダムサンプリング用のindexを準備
+        )
+        target_tweets=pd.concat(
+            [target_tweets,low_priority_tweets.iloc[idx_choiced]] #サンプリングして結合
+        )
+    elif target_tweets.shape[0]>choice_size: #優先度の高いツイートが多い場合は切り捨てる
+        target_tweets=target_tweets.iloc[:choice_size]
+
+    msg="-"*32+f"{Color.CYAN}target tweets{Color.RESET}"+"-"*32
+    print(f"{msg}\n{target_tweets}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
+    #>> favoするツイートを選ぶ >>
+
+
+    #>> ツイートをfavo >>
     url="https://twitter.com"
     auto_twitter=AutoTwitter()
     auto_twitter.access_url(url)
 
-    #いいねする
-    choice_size=num_favo_max if len(tweets)>num_favo_max else len(tweets)
-    idx_choiced=random.sample(
-        np.arange(tweets.shape[0]).tolist(),choice_size
-    )
-    for _,tweet_url in tweets[np.array(idx_choiced)]:
-        auto_twitter.favo(tweet_url)
-    print("---")
-    print("Favo following tweets")
-    print(tweets[idx_choiced])
-
-    #
-
-    #favoったツイートを削除する
-    with conn:
-        with conn.cursor() as cursor:
-            deleted_ids=tweets[idx_choiced][:,0].reshape(-1,1).tolist() #favoしたツイートid
-            query="DELETE FROM tweet WHERE id=%s;"
-            cursor.executemany(query,deleted_ids) #いいねしたやつを削除する
+    with tqdm(total=target_tweets.shape[0]) as pbar:
+        for _,tweet in target_tweets.iterrows():
+            auto_twitter.favo(tweet["url"])
+            pbar.update(1)
+    #>> ツイートをfavo >>
         
-            if args.tweet_type=="follower": #followerツイートの場合は,favo時間を登録する
-                query="""UPDATE account
-                         SET favo_at=%s
-                         WHERE id=%s;
-                      """
-                values=[[now,account_id] for account_id in account_ids]
-                cursor.executemany(query,values)
-        
-        conn.commit()
-    #
+    
+    #>> fovoったツイートの削除 >>
+    tweet_db.drop(target_tweets.index,inplace=True)
+    tweet_db.reset_index(drop=True,inplace=True)
+    tweet_db.to_csv(f"{PARENT}/database/tweets.csv",index=False,encoding="utf-8")
+    #>> fovoったツイートの削除 >>
 
 
 if __name__=="__main__":
