@@ -30,6 +30,7 @@ def main():
     auto_twitter=AutoTwitter()
     auto_twitter.access_url(url=url)
 
+    saved_tweet_db=pd.read_csv(PARENT+"/database/tweets.csv",encoding="utf-8") #既に持ってるツイート
 
     #>> ツイートの検索 >>
     tweet_list=[]
@@ -48,13 +49,14 @@ def main():
             t=time.time()
             while len(tweet_key_word)<=num_per_query and (time.time()-t)<30: #30秒検索してたら次行く
 
-                result=auto_twitter.get_tweet(filters=[bot_filter])
+                result=[]
+                for tweet in auto_twitter.get_tweet(filters=[bot_filter]):
+                    if not tweet[0] in saved_tweet_db["url"].values:
+                        result+=[tweet]
                 tweet_key_word+=result
                 tweet_key_word=list(np.unique(tweet_key_word,axis=0)) #重複を削除
 
                 current_height=auto_twitter.scroll_page(current_height=current_height)
-
-            # print(np.array(tweet_key_word),np.array(tweet_key_word).shape)
 
             if len(tweet_key_word)>num_per_query:
                 tweet_key_word=deepcopy(tweet_key_word[:num_per_query])
@@ -74,7 +76,6 @@ def main():
 
 
     #>> 既に持っているtweetと結合し, 重複を消して保存 >>
-    saved_tweet_db=pd.read_csv(PARENT+"/database/tweets.csv",encoding="utf-8")
     total_tweet_db=pd.concat([
         saved_tweet_db,new_tweet_db
     ])

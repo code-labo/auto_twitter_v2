@@ -19,4 +19,4 @@ rem 検索＆フォロワーのツイートを取得
 python app/search_and_get_tweet.py
 python app/get_followers_tweet.py
 
-pause
+@REM pause
