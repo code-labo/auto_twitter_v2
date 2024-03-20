@@ -10,7 +10,7 @@ rem ひとつ上のディレクトリに移動
 cd ../
 
 rem anacondaをアクティブにする
-call C:\Users\3meko\miniconda\Scripts\activate.bat
+call C:\Users\3meko\miniconda3\Scripts\activate.bat
 
 rem 仮想環境をアクティブにする
 call activate scraping-env 

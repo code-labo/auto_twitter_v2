@@ -10,7 +10,7 @@ rem ひとつ上のディレクトリに移動
 cd ../
 
 rem anacondaをアクティブにする
-call C:\Users\3meko\miniconda\Scripts\activate.bat
+call C:\Users\3meko\miniconda3\Scripts\activate.bat
 
 rem 仮想環境をアクティブにする
 call activate scraping-env 
@@ -19,4 +19,4 @@ rem 検索＆フォロワーのツイートを取得
 python app/search_and_get_tweet.py
 python app/get_followers_tweet.py
 
-@REM pause
+pause
