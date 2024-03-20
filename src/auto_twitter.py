@@ -399,6 +399,8 @@ class AutoTwitter():
                     print(f"favo **{title_name}**")
                 break
 
+        time.sleep(3)
+
 
     def follow(self,account_url):
         """
