@@ -15,7 +15,7 @@ import pandas as pd
 from src.auto_twitter import AutoTwitter
 from src.filters import date_filter
 from src.envs import *
-from src.utils import Color
+from src.utils import Color,print_view
 
 
 def main():
@@ -27,9 +27,9 @@ def main():
     followers=accounts[accounts["is_followed"]==True]
     target_followers=followers.sort_values(by="access_at",ascending=True).iloc[:num_account] #昇順に並び替え
 
-    msg="-"*40+f"{Color.MAGENTA}target followers{Color.RESET}"+"-"*40
-    print(f"{msg}\n{target_followers}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
-
+    print_view(
+        "target followers",target_followers,Color.MAGENTA
+    )
 
     base_url="https://twitter.com"
     auto_twitter=AutoTwitter()
@@ -78,8 +78,9 @@ def main():
     tweets.drop_duplicates(inplace=True) #一応重複を消す
     tweets.to_csv(f"{PARENT}/database/tweets.csv",index=False,encoding="utf-8")
 
-    msg="-"*40+f"{Color.CYAN}new tweets{Color.RESET}"+"-"*40
-    print(f"{msg}\n{new_tweets}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
+    print_view(
+        "new_tweets",new_tweets,Color.CYAN
+    )
     #>> tweetテーブルに新規追加 >>
 
 if __name__=="__main__":

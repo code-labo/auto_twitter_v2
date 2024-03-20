@@ -1,3 +1,5 @@
+import pandas as pd
+
 class Color:
     BLACK          = '\033[30m'#(文字)黒
     RED            = '\033[31m'#(文字)赤
@@ -26,3 +28,8 @@ class Color:
 
 def add_single_quote(s:str):
     return f"'{s}'"
+
+
+def print_view(table_name:str,table:pd.DataFrame,color:Color):
+    msg="-"*40+f"{color}{table_name}{Color.RESET}"+"-"*40
+    print(f"{msg}\n{table}\n{'-'*(len(msg)-len(f'{color}{Color.RESET}'))}")

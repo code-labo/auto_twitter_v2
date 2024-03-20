@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from src.auto_twitter import AutoTwitter
 from src.envs import *
-from src.utils import Color
+from src.utils import Color,print_view
 
 
 def main():
@@ -44,8 +44,9 @@ def main():
     elif target_tweets.shape[0]>choice_size: #優先度の高いツイートが多い場合は切り捨てる
         target_tweets=target_tweets.iloc[:choice_size]
 
-    msg="-"*32+f"{Color.CYAN}target tweets{Color.RESET}"+"-"*32
-    print(f"{msg}\n{target_tweets}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
+    print_view(
+        "target_tweets",target_tweets,Color.CYAN
+    )
     #>> favoするツイートを選ぶ >>
 
 

@@ -15,7 +15,7 @@ import datetime
 from src.auto_twitter import AutoTwitter
 from src.envs import *
 from src.filters import date_filter
-from src.utils import Color
+from src.utils import Color,print_view
 
 def main():
     tweet_num=GET_FAVOER_CFG["TWEET_NUM"] #取得するツイートの数
@@ -69,8 +69,9 @@ def main():
     ] 
     for record_idx,record in owned_accounts.iterrows():
         accounts.at[record_idx,"is_favo"]=True
-    msg="-"*40+f"{Color.CYAN}update accounts{Color.RESET}"+"-"*40
-    print(f"{msg}\n{owned_accounts}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
+    print_view(
+        "update accounts",owned_accounts,Color.CYAN
+    )
     #>> 既に持ってるアカウントのis_favoをTrueに >>
         
 
@@ -86,8 +87,9 @@ def main():
         new_accounts,
         columns=["name","is_following","is_followed","is_favo","access_at"]
     )
-    msg="-"*40+f"{Color.MAGENTA}new accounts{Color.RESET}"+"-"*40
-    print(f"{msg}\n{new_accounts}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
+    print_view(
+        "new accounts",new_accounts,Color.MAGENTA
+    )
     #>> 新しいアカウントを追加 >>
 
 

@@ -17,6 +17,7 @@ import pandas as pd
 from src.auto_twitter import AutoTwitter
 from src.filters import bot_filter
 from src.envs import *
+from src.utils import Color,print_view
 
 
 def main():
@@ -67,9 +68,9 @@ def main():
     priority=pd.Series(np.ones(shape=(tweet_db.shape[0])),name="priority")
     new_tweet_db = pd.concat([tweet_db, priority], axis=1)[["account","url","priority"]] #結合して列の順番を入れ替える
 
-    print("Get following tweet:")
-    print(new_tweet_db)
-    print("---")
+    print_view(
+        "new_tweets",new_tweet_db,Color.CYAN
+    )
 
 
     #>> 既に持っているtweetと結合し, 重複を消して保存 >>
