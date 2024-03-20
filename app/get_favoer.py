@@ -9,97 +9,94 @@ ROOT=str(Path(__file__).parent.parent)
 sys.path.append(ROOT)
 
 import numpy as np
-import psycopg2
-import random
+import pandas as pd
+import datetime
 
 from src.auto_twitter import AutoTwitter
 from src.envs import *
 from src.filters import date_filter
+from src.utils import Color
 
 def main():
     tweet_num=GET_FAVOER_CFG["TWEET_NUM"] #取得するツイートの数
-    account_num_max=GET_FAVOER_CFG["ACCOUNT_NUM_MAX"]
+    max_account_num=GET_FAVOER_CFG["ACCOUNT_NUM_MAX"]
 
-    ##既に登録済みのメンバー(favoerとfollowed)を取得
-    conn=psycopg2.connect(
-        host=HOST,user=USER,password=PASSWORD,database=DATABASE
-    )
-    with conn:
-        with conn.cursor() as cursor:
-            query="""SELECT id,name FROM account 
-                     WHERE roll='favoer' OR roll='followed';"""
-            cursor.execute(query)
-            result=np.array(cursor.fetchall())
-
-            if not len(result)==0:
-                member_name_db=[name.replace(" ","") for name in result[:,1].flatten()]
-            else:
-                member_name_db=[]
-
-            #最大idの取得.自動で振り分けされない.なんでや
-            query="SELECT MAX(id) FROM account;"
-            cursor.execute(query)
-            result=cursor.fetchone()
-            id_last=int(result[0]) if not result[0] is None else 0
-            #
-
-        conn.commit()
-    ##
 
     base_url="https://twitter.com"
     auto_twitter=AutoTwitter()
     auto_twitter.access_url(f"{base_url}/{ACCOUNT_NAME}")
 
-    ##今の画面のツイートをtweet_num件取得
+    ##>> 今の画面のツイートをtweet_num件取得 >>
     tweets=[]
     current_height=0
-    while len(tweets)<tweet_num:
+    is_update=True
+    while len(tweets)<tweet_num and is_update:
+
+        prev_tweet_num=len(tweets)
 
         tweets+=auto_twitter.get_tweet(
             filters=[date_filter]
         ) #ツイートの取得
+        tweets=list(np.unique(tweets,axis=0)) #重複を削除
 
         current_height+=auto_twitter.scroll_page(current_height) #ページをスクロール
 
+        now_tweet_num=len(tweets) 
+        if prev_tweet_num==now_tweet_num: #更新がなければおしまい
+            is_update=False
+
     tweets=np.array(tweets)
-    ##
+    ##>> 今の画面のツイートをtweet_num件取得 >>
 
-    ##取得したツイートにいいねした人を取得
-    favoers_name=[]
-    for tweet in tweets[:,0]:
+
+    ##>> 取得したツイートにいいねした人を取得 >>
+    obtained_accounts=[]
+    for tweet_url,_ in tweets:
+        names_on_tweet=[
+            link.replace(r"https://twitter.com/","") for link 
+            in auto_twitter.get_favoers(tweet_url=tweet_url,max_account_num=max_account_num)
+            ]
+        obtained_accounts+=names_on_tweet
+    ##>> 取得したツイートにいいねした人を取得 >>
+
+
+    accounts=pd.read_csv(f"{PARENT}/database/accounts.csv",encoding="utf-8") #既に登録されたアカウントを読み出し
+    
+
+    #>> 既に持ってるアカウントのis_favoをTrueに >>
+    owned_accounts=accounts[
+        accounts["name"].isin(obtained_accounts) #既に持ってるかつ、取得したアカウントを取得
+    ] 
+    for record_idx,record in owned_accounts.iterrows():
+        accounts.at[record_idx,"is_favo"]=True
+    msg="-"*40+f"{Color.CYAN}update accounts{Color.RESET}"+"-"*40
+    print(f"{msg}\n{owned_accounts}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
+    #>> 既に持ってるアカウントのis_favoをTrueに >>
         
-        favoers_link_tmp=auto_twitter.get_favoers(tweet_url=tweet)
 
-        #既にデータベースに入ってるやつははじく
-        for favoer_link in favoers_link_tmp:
-            favoer_name=favoer_link.replace("https://twitter.com/","")
-            if not favoer_name in member_name_db and not favoer_name in favoers_name:
-                favoers_name.append(favoer_name)
-        #
-    ##
+    #>> 新しいアカウントを追加 >>
+    new_accounts=[]
+    for account in obtained_accounts:
+        if not account in owned_accounts["name"].values:
+            access_at=datetime.datetime.now()-datetime.timedelta(days=365*10) #まだアクセスしてないので, すごく昔の時間を登録しとく
+            new_accounts+=[
+                [account,False,False,True,access_at]
+            ]
+    new_accounts=pd.DataFrame(
+        new_accounts,
+        columns=["name","is_following","is_followed","is_favo","access_at"]
+    )
+    msg="-"*40+f"{Color.MAGENTA}new accounts{Color.RESET}"+"-"*40
+    print(f"{msg}\n{new_accounts}\n{'-'*(len(msg)-len(f'{Color.CYAN}{Color.RESET}'))}")
+    #>> 新しいアカウントを追加 >>
 
-    account_num_max=account_num_max if len(favoers_name)>account_num_max else len(favoers_name)
-    favoers_name=random.sample(favoers_name,account_num_max)
 
-    # print(range(id_last+1,id_last+len(favoers_name)+1))
-    # print(favoers_name)
-    favoers=[
-        [id,name]
-        for id,name
-        in zip(range(id_last+1,id_last+len(favoers_name)+1),favoers_name)
-    ]
-
-    print("***Favoers***")
-    print(np.array(favoers))
-
-    #DBに登録
-    with conn:
-        with conn.cursor() as cursor:
-            query="""INSERT INTO account
-                     (id,name,roll)
-                     VALUES(%s,%s,'favoer');"""
-            cursor.executemany(query,favoers)
-        conn.commit()
+    #>> テーブルにnew_accountを追加して保存 >>
+    accounts=pd.concat(
+        [accounts,new_accounts]
+    )
+    accounts.to_csv(f"{PARENT}/database/accounts.csv",index=False,encoding="utf-8")
+    #>> テーブルにnew_accountを追加して保存 >>
 
 
 if __name__=="__main__":

@@ -131,7 +131,9 @@ class AutoTwitter():
 
     def get_tweet(self,filters:list=[]):
         """
-        今の画面のツイートを取得する
+        今の画面のツイートを取得する.
+        :return tweet_url
+        :return account_url
         """
 
         tweet_list=[]
@@ -306,17 +308,21 @@ class AutoTwitter():
             if "like" in href:
                 ancher.click()
                 break
-        time.sleep(5)
+        time.sleep(3)
         ##
 
-        # self.driver.set_window_size(400,self.driver.get_window_size()["height"]) #幅を狭めることでpopupページじゃなくする.
+        #幅を狭めることでpopupページじゃなくする & サイドバーのおすすめアカウントを消す
+        self.driver.set_window_size(400,self.driver.get_window_size()["height"]) 
 
 
-    def get_favoers(self,tweet_url):
+    def get_favoers(self,tweet_url,max_account_num=30):
         """
         あるツイートにいいねした人のアカウントリンクのリスト
         全部は取らない.そんなに取っても一気にフォローできないから.
         3スクロール分くらいしかとらない
+        :param tweet_url
+        :param max_account_num : 最大のアカウントの数
+        :return favoer_list
         """
 
         #いいねした人の一覧画面を開く
@@ -326,21 +332,19 @@ class AutoTwitter():
         #スクロールしながら
         favoer_list=[]
         current_height=0
-        scroll_count=0
-        class_value="css-175oi2r r-1wbh5a2 r-dnmrzs r-1ny4l3l r-1loqt21" #いいね一覧のそれぞれのアカウントのリンクのクラス
+        class_value="css-175oi2r.r-1wbh5a2.r-dnmrzs.r-1ny4l3l.r-1loqt21" #いいね一覧のそれぞれのアカウントのリンクのクラス
         while True:
 
             #今の画面のいいねした人を取得
             is_update=False
             favoer_list_per_page=[]
-            anchers=self.driver.find_elements(by=By.TAG_NAME,value="a")
-            for ancher in anchers:
+            account_elms=self.driver.find_elements(by=By.CLASS_NAME,value=class_value)
+            for elm in account_elms:
                 try:
-                    if ancher.get_attribute("class")==class_value:
-                        href=ancher.get_attribute("href")
-                        if self.account_name in href:
-                            break
-                        favoer_list_per_page.append(href)
+                    href=elm.get_attribute("href")
+                    if self.account_name in href:
+                        break
+                    favoer_list_per_page.append(href)
                 except Exception as e:
                     print(e)
                     continue
@@ -357,11 +361,13 @@ class AutoTwitter():
             if not is_update:
                 break
 
+            if len(favoer_list)>=max_account_num: #指定以上のサイズになったらおしまい
+                favoer_list=favoer_list[:max_account_num]
+                break
+
             #ページのスクロール
             current_height=self.scroll_page(current_height)
-            scroll_count+=1
-            if scroll_count>3:
-                break
+
 
         return favoer_list
     
