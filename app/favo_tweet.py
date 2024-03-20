@@ -13,6 +13,7 @@ import psycopg2
 import argparse
 import datetime
 import random
+import pandas as pd
 
 from src.auto_twitter import AutoTwitter
 from src.envs import *
@@ -25,38 +26,42 @@ def main():
 
     num_favo_max=FAVO_TWEET_CFG["NUM_FAVO_MAX"]
 
-    now=datetime.datetime.now()
+    tweet_db=pd.read_csv(f"{PARENT}/database/twwets.csv",encoding="utf-8")
+    print(tweet_db)
+    exit(1)
+
+    # now=datetime.datetime.now()
 
     ##データベースへの接続
-    conn=psycopg2.connect(
-        host=HOST,user=USER,password=PASSWORD,database=DATABASE
-    )
+    # conn=psycopg2.connect(
+    #     host=HOST,user=USER,password=PASSWORD,database=DATABASE
+    # )
 
-    #ツイートを取得
-    with conn:
-        with conn.cursor() as cursor:
+    # #ツイートを取得
+    # with conn:
+    #     with conn.cursor() as cursor:
 
-            if args.tweet_type=="searched": #検索したツイート
-                query="SELECT id,url FROM tweet WHERE account_id IS NULL;"
-                cursor.execute(query)
-                tweets=np.array(cursor.fetchall())
+    #         if args.tweet_type=="searched": #検索したツイート
+    #             query="SELECT id,url FROM tweet WHERE account_id IS NULL;"
+    #             cursor.execute(query)
+    #             tweets=np.array(cursor.fetchall())
 
-            elif args.tweet_type=="follower": #フォロワーのツイート
-                query="""SELECT id,account_id,url FROM tweet
-                         WHERE NOT account_id IS NULL;
-                      """
-                cursor.execute(query)
-                result=np.array(cursor.fetchall())
-                if len(result)>0:
-                    tweets=np.concatenate(
-                        [result[:,0].reshape(-1,1),result[:,2].reshape(-1,1)],
-                        axis=1
-                    )
-                    account_ids=result[:,1]
-                else:
-                    tweets=result
-        conn.commit()
-    #
+    #         elif args.tweet_type=="follower": #フォロワーのツイート
+    #             query="""SELECT id,account_id,url FROM tweet
+    #                      WHERE NOT account_id IS NULL;
+    #                   """
+    #             cursor.execute(query)
+    #             result=np.array(cursor.fetchall())
+    #             if len(result)>0:
+    #                 tweets=np.concatenate(
+    #                     [result[:,0].reshape(-1,1),result[:,2].reshape(-1,1)],
+    #                     axis=1
+    #                 )
+    #                 account_ids=result[:,1]
+    #             else:
+    #                 tweets=result
+    #     conn.commit()
+    # #
 
     if len(tweets)==0: #tweetが無ければ終わり
         print("***No tweet...***")
