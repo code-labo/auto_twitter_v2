@@ -15,6 +15,7 @@ call C:\Users\3meko\miniconda\Scripts\activate.bat
 rem 仮想環境をアクティブにする
 call activate scraping-env 
 
-python app/get_follower.py
+rem いいねする
+python app/favo_tweet.py
 
 @REM pause
