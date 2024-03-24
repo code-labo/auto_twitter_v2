@@ -250,7 +250,7 @@ class AutoTwitter():
                 break
 
         time.sleep(1)
-        self.access_url(account_url+"/followers")
+        self.access_url(account_url+"/followers") #<-直リンクはロックの原因になる. ボタンをクリックすべし
 
         class_value="css-175oi2r.r-1wbh5a2.r-dnmrzs.r-1ny4l3l.r-1loqt21" #フォロワー一覧のそれぞれのアカウントのリンクのクラス名
         followers_links=[]
@@ -326,7 +326,7 @@ class AutoTwitter():
         """
 
         #いいねした人の一覧画面を開く
-        self._open_favoer_page(tweet_url+"/likes")        
+        self._open_favoer_page(tweet_url+"/likes") #直リンクはロックの原因になる. ボタンを辿らないとダメ
 
 
         #スクロールしながら
@@ -377,7 +377,7 @@ class AutoTwitter():
         ツイートページのtweet_urlにアクセスしてファボる
         """
 
-        self.driver.get(url=tweet_url)
+        self.driver.get(url=tweet_url) #ダメ. 直リンクはロックの原因
         time.sleep(1)
 
         #クリックできる要素を取得
@@ -408,7 +408,7 @@ class AutoTwitter():
         """
 
         #アクセス
-        self.driver.get(url=account_url)
+        self.driver.get(url=account_url) #ダメ. 直リンクはロックの原因
         time.sleep(0.8)
 
         #フォローボタンを取得
